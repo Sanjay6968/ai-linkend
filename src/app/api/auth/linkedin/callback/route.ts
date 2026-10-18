@@ -8,20 +8,24 @@ export async function GET(req: Request) {
   const error = searchParams.get("error");
   const errorDescription = searchParams.get("error_description");
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
+  const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const origin = `${proto}://${host}`;
 
   if (error) {
     console.error("LinkedIn OAuth Error:", error, errorDescription);
-    return NextResponse.redirect(`${baseUrl}/dashboard/settings?error=${encodeURIComponent(errorDescription || error)}`);
+    return NextResponse.redirect(`${origin}/dashboard/settings?error=${encodeURIComponent(errorDescription || error)}`);
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(`${baseUrl}/dashboard/settings?error=Invalid_OAuth_Parameters`);
+    return NextResponse.redirect(`${origin}/dashboard/settings?error=Invalid_OAuth_Parameters`);
   }
 
   const clientId = process.env.LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
-  const redirectUri = process.env.LINKEDIN_REDIRECT_URI || `${baseUrl}/api/auth/linkedin/callback`;
+  const redirectUri = process.env.LINKEDIN_REDIRECT_URI && !process.env.LINKEDIN_REDIRECT_URI.includes("placeholder")
+    ? process.env.LINKEDIN_REDIRECT_URI
+    : `${origin}/api/auth/linkedin/callback`;
 
   try {
     const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
@@ -68,9 +72,9 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.redirect(`${baseUrl}/dashboard/settings?linkedin=success`);
+    return NextResponse.redirect(`${origin}/dashboard/settings?linkedin=success`);
   } catch (err: any) {
     console.error("LinkedIn Callback Exception:", err);
-    return NextResponse.redirect(`${baseUrl}/dashboard/settings?error=Internal_OAuth_Error`);
+    return NextResponse.redirect(`${origin}/dashboard/settings?error=Internal_OAuth_Error`);
   }
 }

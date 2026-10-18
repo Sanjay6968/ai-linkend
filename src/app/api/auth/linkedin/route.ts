@@ -9,7 +9,12 @@ export async function GET(req: Request) {
   }
 
   const clientId = process.env.LINKEDIN_CLIENT_ID;
-  const redirectUri = process.env.LINKEDIN_REDIRECT_URI || "http://localhost:3000/api/auth/linkedin/callback";
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
+  const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const origin = `${proto}://${host}`;
+  const redirectUri = process.env.LINKEDIN_REDIRECT_URI && !process.env.LINKEDIN_REDIRECT_URI.includes("placeholder")
+    ? process.env.LINKEDIN_REDIRECT_URI
+    : `${origin}/api/auth/linkedin/callback`;
 
   if (!clientId || clientId === "YOUR_LINKEDIN_CLIENT_ID") {
     return NextResponse.json(
