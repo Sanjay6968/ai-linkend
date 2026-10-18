@@ -23,9 +23,7 @@ export async function GET(req: Request) {
 
   const clientId = process.env.LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
-  const redirectUri = process.env.LINKEDIN_REDIRECT_URI && !process.env.LINKEDIN_REDIRECT_URI.includes("placeholder")
-    ? process.env.LINKEDIN_REDIRECT_URI
-    : `${origin}/api/auth/linkedin/callback`;
+  const redirectUri = `${origin}/api/auth/linkedin/callback`;
 
   try {
     const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
