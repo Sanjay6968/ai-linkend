@@ -44,7 +44,8 @@ export async function GET(req: Request) {
 
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("LinkedIn Token Exchange Failed:", tokenData);
-      return NextResponse.redirect(`${origin}/dashboard/settings?error=Token_Exchange_Failed`);
+      const detail = tokenData.error_description || tokenData.error || "Token_Exchange_Failed";
+      return NextResponse.redirect(`${origin}/dashboard/settings?error=${encodeURIComponent(detail)}`);
     }
 
     const accessToken = tokenData.access_token;
