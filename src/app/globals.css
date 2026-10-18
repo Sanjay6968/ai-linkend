@@ -1,0 +1,70 @@
+@import "tailwindcss";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  
+  --color-background: #0A0D08;
+  --color-foreground: #DBCAC0;
+  
+  --color-primary: #6F8055;
+  --color-primary-foreground: #0A0D08;
+  --color-primary-hover: #3E4F32;
+  
+  --color-secondary: #3E4F32;
+  --color-secondary-foreground: #DBCAC0;
+  
+  --color-accent: #DBCAC0;
+  --color-accent-foreground: #0A0D08;
+
+  --color-muted: #141a10;
+  --color-muted-foreground: #9ca3af;
+  
+  --color-border: rgba(219, 202, 192, 0.15);
+  --color-input: rgba(219, 202, 192, 0.15);
+  --color-ring: #6F8055;
+
+  --color-card: #0A0D08;
+  --color-card-foreground: #DBCAC0;
+  
+  --color-popover: #0A0D08;
+  --color-popover-foreground: #DBCAC0;
+  
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
+}
+
+.glass-panel {
+  background: rgba(219, 202, 192, 0.03); /* Soft sand overlay */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(219, 202, 192, 0.15);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #DBCAC0, #6F8055);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground;
+    line-height: 1.6;
+  }
+}
