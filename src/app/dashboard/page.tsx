@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Send, Calendar as CalendarIcon, Clock, Save, Copy, LayoutDashboard, Loader2, Check } from "lucide-react";
+import { Sparkles, Send, Calendar as CalendarIcon, Clock, Save, Copy, LayoutDashboard, Loader2, Check, Volume2, VolumeX, Zap, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,74 @@ export default function DashboardPage() {
   const [isPublishingLinkedIn, setIsPublishingLinkedIn] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleVoiceOver = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("Text-to-speech audio is not supported in this browser.");
+      return;
+    }
+
+    if (isPlayingAudio) {
+      window.speechSynthesis.cancel();
+      setIsPlayingAudio(false);
+      return;
+    }
+
+    if (!generatedContent) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(generatedContent);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => setIsPlayingAudio(false);
+    utterance.onerror = () => setIsPlayingAudio(false);
+
+    setIsPlayingAudio(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleAutoSetPeakTime = () => {
+    const today = new Date();
+    const currentDay = today.getDay();
+    let daysToAdd = 1;
+    if (currentDay === 4) daysToAdd = 5;
+    else if (currentDay === 5) daysToAdd = 4;
+    else if (currentDay === 6) daysToAdd = 3;
+    else if (currentDay === 0) daysToAdd = 2;
+    else daysToAdd = 1;
+
+    const targetDate = new Date();
+    targetDate.setDate(today.getDate() + daysToAdd);
+    const dateStr = targetDate.toISOString().split("T")[0];
+    
+    setScheduledDate(dateStr);
+    setScheduledTime("08:30");
+    showFeedback("Auto-set to peak LinkedIn reach slot: 08:30 AM!");
+  };
+
+  const calculateReachMetrics = (text: string | null) => {
+    if (!text) return { score: 70, label: "Moderate", readingTime: "1 min read" };
+    const words = text.trim().split(/\s+/).length;
+    const lines = text.split("\n").filter(l => l.trim().length > 0).length;
+    let score = 65;
+    if (words >= 100 && words <= 350) score += 15;
+    if (lines >= 5) score += 10;
+    if (text.includes("?") || text.includes("agree") || text.includes("thoughts")) score += 10;
+    score = Math.min(score, 98);
+    const label = score >= 85 ? "High Viral Potential" : score >= 75 ? "Strong Reach" : "Standard Reach";
+    const readingTime = `${Math.max(1, Math.ceil(words / 200))} min read`;
+    return { score, label, readingTime };
+  };
 
   const showFeedback = (msg: string) => {
     setFeedbackMessage(msg);
@@ -326,6 +394,24 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="pt-2 border-t border-[#DBCAC0]/10 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-[#DBCAC0] flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-[#6F8055]" /> Peak Reach Window
+                  </p>
+                  <p className="text-[10px] text-[#DBCAC0]/50">Tue / Thu · 8:00 AM - 10:00 AM</p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAutoSetPeakTime}
+                  className="border-[#6F8055]/40 text-[#6F8055] hover:bg-[#3E4F32]/30 text-xs h-7 font-bold"
+                >
+                  <Zap className="w-3 h-3 mr-1" /> Auto-Set Peak Slot
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -339,13 +425,26 @@ export default function DashboardPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
+                    onClick={handleVoiceOver}
+                    className={`h-8 text-xs font-semibold ${isPlayingAudio ? "text-green-400 bg-green-500/10" : "text-[#DBCAC0]/70 hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30"}`}
+                  >
+                    {isPlayingAudio ? (
+                      <><VolumeX className="h-4 w-4 mr-1.5 text-green-400 animate-pulse" /> Stop Voice</>
+                    ) : (
+                      <><Volume2 className="h-4 w-4 mr-1.5 text-[#6F8055]" /> Voice Over</>
+                    )}
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
                     onClick={handleCopy}
-                    className="text-[#DBCAC0]/60 hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 h-8"
+                    className="text-[#DBCAC0]/60 hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 h-8 text-xs"
                   >
                     {copied ? (
-                      <><Check className="h-4 w-4 mr-2 text-green-400" /> Copied!</>
+                      <><Check className="h-4 w-4 mr-1.5 text-green-400" /> Copied!</>
                     ) : (
-                      <><Copy className="h-4 w-4 mr-2" /> Copy to Clipboard</>
+                      <><Copy className="h-4 w-4 mr-1.5" /> Copy</>
                     )}
                   </Button>
 
@@ -369,7 +468,7 @@ export default function DashboardPage() {
               {isGenerating ? (
                 <div className="h-full w-full flex flex-col items-center justify-center space-y-4 text-[#DBCAC0]">
                   <Sparkles className="h-10 w-10 animate-pulse text-[#6F8055]" />
-                  <p className="font-bold tracking-widest uppercase text-sm animate-pulse">Constructing via Groq LPU...</p>
+                  <p className="font-bold tracking-widest uppercase text-sm animate-pulse">Crafting high-impact post via ContentMint AI...</p>
                 </div>
               ) : generatedContent ? (
                 <motion.div 
@@ -377,6 +476,36 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="p-8"
                 >
+                  {(() => {
+                    const metrics = calculateReachMetrics(generatedContent);
+                    return (
+                      <div className="flex flex-wrap items-center justify-between gap-3 p-3 mb-6 rounded-xl bg-[#0A0D08]/80 border border-[#6F8055]/30">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-[#6F8055]/20 flex items-center justify-center text-[#6F8055]">
+                            <TrendingUp className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-[#DBCAC0]">Viral Reach Potential:</span>
+                              <span className="text-xs font-extrabold text-[#6F8055]">{metrics.score}/100</span>
+                              <span className="text-[10px] bg-[#6F8055]/20 text-[#6F8055] px-2 py-0.5 rounded-full font-bold">{metrics.label}</span>
+                            </div>
+                            <p className="text-[11px] text-[#DBCAC0]/60">Pacing: {metrics.readingTime} · Best Time: Tue / Thu at 08:30 AM</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleAutoSetPeakTime}
+                          className="text-[#6F8055] hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 text-xs h-7 font-bold"
+                        >
+                          <Zap className="w-3 h-3 mr-1 text-[#6F8055]" /> Apply Peak Slot
+                        </Button>
+                      </div>
+                    );
+                  })()}
+
                   <Tabs defaultValue="post" className="w-full">
                     <TabsList className="bg-[#0A0D08]/80 border border-[#DBCAC0]/10 mb-6">
                       <TabsTrigger value="post" className="data-[state=active]:bg-[#6F8055] data-[state=active]:text-[#0A0D08] font-bold">Text Post</TabsTrigger>

@@ -200,25 +200,25 @@ export default function SettingsPage() {
           <Card className="glass-panel bg-[#0A0D08]/60 border-[#DBCAC0]/10">
             <CardHeader>
               <CardTitle className="text-xl text-[#DBCAC0] flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[#DBCAC0]" /> Groq API Configuration
+                <Shield className="w-5 h-5 text-[#DBCAC0]" /> Custom AI Engine Configuration
               </CardTitle>
               <CardDescription className="text-[#DBCAC0]/60">
-                Custom API key override. If left empty, your application automatically uses the system environment key.
+                Optional custom API key override. If left empty, ContentMint AI automatically uses the high-performance system engine.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="groq-key" className="text-[#DBCAC0]/80">Groq Secret Key</Label>
+                <Label htmlFor="groq-key" className="text-[#DBCAC0]/80">Custom AI Engine Key</Label>
                 <Input 
                   id="groq-key" 
                   type="password" 
-                  placeholder="gsk_..." 
+                  placeholder="Enter custom API key (optional)..." 
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   className="bg-[#3E4F32]/10 border-[#DBCAC0]/20 text-[#DBCAC0] focus-visible:ring-[#6F8055] font-mono" 
                 />
                 <p className="text-xs text-[#DBCAC0]/50 mt-2">
-                  You can get a free API key from the <a href="https://console.groq.com/" target="_blank" rel="noreferrer" className="text-[#6F8055] hover:underline font-bold">Groq Console</a>.
+                  Override the default system neural engine with your private API key if preferred.
                 </p>
               </div>
             </CardContent>
@@ -263,7 +263,7 @@ export default function SettingsPage() {
                   <CheckCircle2 className="w-4 h-4 text-[#6F8055]" /> Smart Scheduling
                 </li>
                 <li className="flex items-center gap-3 text-sm text-[#DBCAC0]">
-                  <CheckCircle2 className="w-4 h-4 text-[#6F8055]" /> Priority Groq LPU Inference
+                  <CheckCircle2 className="w-4 h-4 text-[#6F8055]" /> Priority High-Speed AI Inference
                 </li>
               </ul>
             </CardContent>

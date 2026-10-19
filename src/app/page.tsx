@@ -183,8 +183,8 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-3 gap-6">
           <FeatureCard 
             icon={<Bot size={24} />}
-            title="Groq LPU Inference"
-            description="High-speed model execution constructs professional LinkedIn hooks and structured insights in under two seconds."
+            title="High-Speed Neural AI"
+            description="Proprietary neural pipeline constructs professional LinkedIn hooks and structured insights in under two seconds."
             accentColor="#6F8055"
           />
           <FeatureCard 

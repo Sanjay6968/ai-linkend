@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "ContentMint — AI LinkedIn Content Engine",
-    description: "Turn a rough idea into a published LinkedIn post. Groq LPU · LinkedIn OAuth · Smart Scheduling.",
+    description: "Turn a rough idea into a published LinkedIn post. ContentMint AI · LinkedIn OAuth · Smart Scheduling.",
     type: "website",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "ContentMint" }],
   },

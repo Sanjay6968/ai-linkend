@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Send, Loader2, Plus, Trash2, CheckCircle2, Play, ExternalLink } from "lucide-react";
+import { Clock, Send, Loader2, Plus, Trash2, CheckCircle2, Play, ExternalLink, Volume2, VolumeX } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/firebase/AuthContext";
@@ -27,6 +27,35 @@ export default function SchedulePage() {
   const [linkedinConnected, setLinkedinConnected] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processMessage, setProcessMessage] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "SCHEDULED" | "PUBLISHED">("ALL");
+  const [playingPostId, setPlayingPostId] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handlePlayAudio = (id: string, text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("Audio voice over is not supported in this browser.");
+      return;
+    }
+    if (playingPostId === id) {
+      window.speechSynthesis.cancel();
+      setPlayingPostId(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.onend = () => setPlayingPostId(null);
+    utterance.onerror = () => setPlayingPostId(null);
+    setPlayingPostId(id);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const fetchScheduled = async () => {
     if (!user) return;
@@ -140,9 +169,13 @@ export default function SchedulePage() {
 
   const selectedDateStr = date ? date.toISOString().split("T")[0] : null;
   const filteredPosts = scheduledPosts.filter((post) => {
+    if (statusFilter !== "ALL" && post.status !== statusFilter) return false;
     if (!selectedDateStr || !post.scheduledDate) return true;
     return post.scheduledDate.startsWith(selectedDateStr);
   });
+
+  const queuedCount = scheduledPosts.filter((p) => p.status === "SCHEDULED").length;
+  const publishedCount = scheduledPosts.filter((p) => p.status === "PUBLISHED").length;
 
   return (
     <div className="flex flex-col h-full space-y-8">
@@ -241,10 +274,48 @@ export default function SchedulePage() {
         </div>
 
         <div className="lg:col-span-8 space-y-6">
-          <h2 className="text-lg font-bold text-[#DBCAC0] flex items-center gap-2">
-            <Clock className="w-5 h-5 text-[#6F8055]" />
-            Upcoming for {date ? date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "All Dates"}
-          </h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h2 className="text-lg font-bold text-[#DBCAC0] flex items-center gap-2">
+              <Clock className="w-5 h-5 text-[#6F8055]" />
+              {date ? date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "All Dates"}
+            </h2>
+
+            <div className="flex items-center gap-1 bg-[#0A0D08]/60 border border-[#DBCAC0]/10 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("ALL")}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
+                  statusFilter === "ALL"
+                    ? "bg-[#6F8055] text-[#0A0D08]"
+                    : "text-[#DBCAC0]/60 hover:text-[#DBCAC0]"
+                }`}
+              >
+                All ({scheduledPosts.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("SCHEDULED")}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
+                  statusFilter === "SCHEDULED"
+                    ? "bg-[#6F8055] text-[#0A0D08]"
+                    : "text-[#DBCAC0]/60 hover:text-[#DBCAC0]"
+                }`}
+              >
+                Queued ({queuedCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("PUBLISHED")}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
+                  statusFilter === "PUBLISHED"
+                    ? "bg-[#6F8055] text-[#0A0D08]"
+                    : "text-[#DBCAC0]/60 hover:text-[#DBCAC0]"
+                }`}
+              >
+                Published ({publishedCount})
+              </button>
+            </div>
+          </div>
 
           {loading ? (
             <div className="flex justify-center items-center py-16 text-[#DBCAC0]">
@@ -254,9 +325,11 @@ export default function SchedulePage() {
           ) : filteredPosts.length === 0 ? (
             <div className="p-12 border border-dashed border-[#DBCAC0]/10 rounded-2xl flex flex-col items-center justify-center text-center">
               <Clock className="w-12 h-12 text-[#DBCAC0]/30 mb-3" />
-              <p className="font-bold text-base text-[#DBCAC0] mb-1">No posts scheduled for this date</p>
+              <p className="font-bold text-base text-[#DBCAC0] mb-1">No posts found</p>
               <p className="text-xs text-[#DBCAC0]/60 max-w-xs mb-5">
-                Pick a date in the Workspace and click "Schedule Post" to queue your next update.
+                {statusFilter !== "ALL"
+                  ? `No ${statusFilter.toLowerCase()} posts found for this date filter.`
+                  : "Pick a date in the Workspace and click Schedule Post to queue your next update."}
               </p>
               <Link 
                 href="/dashboard"
@@ -285,10 +358,10 @@ export default function SchedulePage() {
                           </span>
                           <div className="flex items-center gap-2">
                             <span className={cn(
-                              "text-[10px] font-bold px-2 py-0.5 rounded",
-                              isPublished ? "bg-green-500/20 text-green-400" : "bg-[#6F8055]/20 text-[#6F8055]"
+                              "text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1",
+                              isPublished ? "bg-green-500/20 text-green-400 border border-green-500/30" : "bg-[#6F8055]/20 text-[#6F8055] border border-[#6F8055]/30"
                             )}>
-                              {isPublished ? "Published" : "Queued"}
+                              {isPublished ? "● Published Live" : "● Queued"}
                             </span>
                             <button 
                               onClick={() => handleDelete(post.id)}
@@ -305,18 +378,31 @@ export default function SchedulePage() {
                         <p className="text-sm text-[#DBCAC0]/60 line-clamp-2 leading-relaxed mb-3">
                           {post.content}
                         </p>
-                        {!isPublished && (
-                          <div className="flex justify-end gap-2 pt-2 border-t border-[#DBCAC0]/10">
+                        <div className="flex items-center justify-between pt-2 border-t border-[#DBCAC0]/10">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handlePlayAudio(post.id, post.content)}
+                            className={`text-xs h-7 font-semibold ${playingPostId === post.id ? "text-green-400 bg-green-500/10" : "text-[#DBCAC0]/60 hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30"}`}
+                          >
+                            {playingPostId === post.id ? (
+                              <><VolumeX className="w-3 h-3 mr-1 text-green-400 animate-pulse" /> Stop Voice</>
+                            ) : (
+                              <><Volume2 className="w-3 h-3 mr-1 text-[#6F8055]" /> Voice Over</>
+                            )}
+                          </Button>
+
+                          {!isPublished && (
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handlePostDirectlyNow(post)}
-                              className="text-xs text-[#6F8055] hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 h-7"
+                              className="text-xs text-[#6F8055] hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 h-7 font-bold"
                             >
                               <ExternalLink className="w-3 h-3 mr-1" /> Post Now
                             </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
