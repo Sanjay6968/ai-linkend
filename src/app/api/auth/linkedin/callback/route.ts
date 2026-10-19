@@ -8,9 +8,9 @@ export async function GET(req: Request) {
   const error = searchParams.get("error");
   const errorDescription = searchParams.get("error_description");
 
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
-  const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-  const origin = `${proto}://${host}`;
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+  const origin = isLocal ? `http://${host}` : (process.env.NEXT_PUBLIC_APP_URL || "https://ai-linkend-two.vercel.app");
 
   if (error) {
     console.error("LinkedIn OAuth Error:", error, errorDescription);
