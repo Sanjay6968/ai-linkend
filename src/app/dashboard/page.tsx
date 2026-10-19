@@ -116,6 +116,7 @@ export default function DashboardPage() {
 
     setIsScheduling(true);
     try {
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,6 +127,7 @@ export default function DashboardPage() {
           status: "SCHEDULED",
           scheduledDate,
           scheduledTime,
+          userTimezone,
         }),
       });
 

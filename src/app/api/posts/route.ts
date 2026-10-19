@@ -49,7 +49,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { firebaseUid, email, title, content, status = "DRAFT", scheduledDate, scheduledTime } = body;
+    const { firebaseUid, email, title, content, status = "DRAFT", scheduledDate, scheduledTime, userTimezone } = body;
 
     if (!firebaseUid) {
       return NextResponse.json({ error: "firebaseUid is required" }, { status: 400 });
@@ -77,6 +77,7 @@ export async function POST(req: Request) {
         status,
         scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
         scheduledTime: scheduledTime || null,
+        userTimezone: userTimezone || null,
       },
     });
 

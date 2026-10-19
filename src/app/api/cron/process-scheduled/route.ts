@@ -25,39 +25,45 @@ export async function POST(req: Request) {
 async function handleProcess() {
   try {
     const now = new Date();
-    const currentDateStr = now.toISOString().split("T")[0];
-    const currentHours = String(now.getHours()).padStart(2, "0");
-    const currentMinutes = String(now.getMinutes()).padStart(2, "0");
-    const currentTimeStr = `${currentHours}:${currentMinutes}`;
 
     const scheduledPosts = await prisma.post.findMany({
-      where: {
-        status: "SCHEDULED",
-      },
-      include: {
-        user: true,
-      },
+      where: { status: "SCHEDULED" },
+      include: { user: true },
     });
 
     const duePosts = scheduledPosts.filter((post) => {
       if (!post.scheduledDate) return false;
+
+      const tz = (post as any).userTimezone || "UTC";
+
+      const localNow = new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(now);
+
+      const localTime = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(now).replace(":", ":");
+
       const postDateStr = post.scheduledDate.toISOString().split("T")[0];
 
-      if (postDateStr < currentDateStr) return true;
+      if (postDateStr < localNow) return true;
 
-      if (postDateStr === currentDateStr) {
+      if (postDateStr === localNow) {
         if (!post.scheduledTime) return true;
-        return post.scheduledTime <= currentTimeStr;
+        return post.scheduledTime <= localTime;
       }
 
       return false;
     });
 
     if (duePosts.length === 0) {
-      return NextResponse.json({
-        message: "No scheduled posts are currently due.",
-        processed: 0,
-      });
+      return NextResponse.json({ message: "No scheduled posts are currently due.", processed: 0 });
     }
 
     const results = [];
