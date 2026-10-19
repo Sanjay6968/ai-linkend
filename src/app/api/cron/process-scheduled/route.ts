@@ -1,21 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+function isAuthorized(req: Request): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return true;
+  const authHeader = req.headers.get("authorization");
+  return authHeader === `Bearer ${secret}`;
+}
+
 export async function GET(req: Request) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   return handleProcess();
 }
 
 export async function POST(req: Request) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   return handleProcess();
 }
 
 async function handleProcess() {
   try {
     const now = new Date();
-    const currentDateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const currentDateStr = now.toISOString().split("T")[0];
     const currentHours = String(now.getHours()).padStart(2, "0");
     const currentMinutes = String(now.getMinutes()).padStart(2, "0");
-    const currentTimeStr = `${currentHours}:${currentMinutes}`; // HH:MM
+    const currentTimeStr = `${currentHours}:${currentMinutes}`;
 
     const scheduledPosts = await prisma.post.findMany({
       where: {

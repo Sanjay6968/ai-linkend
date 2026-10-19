@@ -52,12 +52,36 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 3000);
   };
 
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+
   const handleConnectLinkedIn = () => {
     if (!user) {
       alert("Please log in first.");
       return;
     }
     window.location.href = `/api/auth/linkedin?firebaseUid=${user.uid}`;
+  };
+
+  const handleDisconnectLinkedIn = async () => {
+    if (!user) return;
+    if (!confirm("Are you sure you want to disconnect your LinkedIn account?")) return;
+
+    setIsDisconnecting(true);
+    try {
+      const res = await fetch(`/api/user/status?firebaseUid=${user.uid}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setLinkedinConnected(false);
+      } else {
+        alert("Failed to disconnect account.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to disconnect account.");
+    } finally {
+      setIsDisconnecting(false);
+    }
   };
 
   return (
@@ -150,12 +174,11 @@ export default function SettingsPage() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => {
-                      alert("To disconnect, revoke ContentMint's access in your LinkedIn Settings > Data Privacy > Permitted Services.");
-                    }}
-                    className="border-[#DBCAC0]/20 text-[#DBCAC0]/70 hover:bg-[#3E4F32]/30 text-xs"
+                    disabled={isDisconnecting}
+                    onClick={handleDisconnectLinkedIn}
+                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 text-xs font-semibold"
                   >
-                    Manage
+                    {isDisconnecting ? "Disconnecting..." : "Disconnect"}
                   </Button>
                 </div>
               ) : (
