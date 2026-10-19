@@ -47,10 +47,14 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!generatedContent) return;
+    const textToRead = generatedContent || prompt;
+    if (!textToRead) {
+      alert("Enter a prompt or generate a post first to listen to the voice over.");
+      return;
+    }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(generatedContent);
+    const utterance = new SpeechSynthesisUtterance(textToRead);
     utterance.rate = 0.95;
     utterance.pitch = 1.0;
 
@@ -420,49 +424,52 @@ export default function DashboardPage() {
           <Card className="glass-panel bg-[#3E4F32]/10 border-[#DBCAC0]/10 flex-1 flex flex-col overflow-hidden">
             <CardHeader className="border-b border-[#DBCAC0]/10 bg-[#0A0D08]/40 py-4 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold text-[#DBCAC0]">Live Preview</CardTitle>
-              {generatedContent && (
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleVoiceOver}
-                    className={`h-8 text-xs font-semibold ${isPlayingAudio ? "text-green-400 bg-green-500/10" : "text-[#DBCAC0]/70 hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30"}`}
-                  >
-                    {isPlayingAudio ? (
-                      <><VolumeX className="h-4 w-4 mr-1.5 text-green-400 animate-pulse" /> Stop Voice</>
-                    ) : (
-                      <><Volume2 className="h-4 w-4 mr-1.5 text-[#6F8055]" /> Voice Over</>
-                    )}
-                  </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleVoiceOver}
+                  disabled={!generatedContent && !prompt}
+                  className={`h-8 text-xs font-semibold border-[#6F8055]/40 transition-colors ${isPlayingAudio ? "text-green-400 bg-green-500/10 border-green-500/50" : "text-[#DBCAC0] hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 disabled:opacity-40"}`}
+                >
+                  {isPlayingAudio ? (
+                    <><VolumeX className="h-4 w-4 mr-1.5 text-green-400 animate-pulse" /> Stop Voice</>
+                  ) : (
+                    <><Volume2 className="h-4 w-4 mr-1.5 text-[#6F8055]" /> Voice Over</>
+                  )}
+                </Button>
 
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleCopy}
-                    className="text-[#DBCAC0]/60 hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 h-8 text-xs"
-                  >
-                    {copied ? (
-                      <><Check className="h-4 w-4 mr-1.5 text-green-400" /> Copied!</>
-                    ) : (
-                      <><Copy className="h-4 w-4 mr-1.5" /> Copy</>
-                    )}
-                  </Button>
+                {generatedContent && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleCopy}
+                      className="text-[#DBCAC0]/60 hover:text-[#DBCAC0] hover:bg-[#3E4F32]/30 h-8 text-xs"
+                    >
+                      {copied ? (
+                        <><Check className="h-4 w-4 mr-1.5 text-green-400" /> Copied!</>
+                      ) : (
+                        <><Copy className="h-4 w-4 mr-1.5" /> Copy</>
+                      )}
+                    </Button>
 
-                  <Button 
-                    size="sm" 
-                    onClick={handlePublishLinkedIn}
-                    disabled={isPublishingLinkedIn}
-                    className="bg-[#0A66C2] hover:bg-[#004182] text-white font-bold h-8 text-xs flex items-center gap-1.5 shadow"
-                  >
-                    {isPublishingLinkedIn ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <span className="font-black text-xs">in</span>
-                    )}
-                    Post to LinkedIn
-                  </Button>
-                </div>
-              )}
+                    <Button 
+                      size="sm" 
+                      onClick={handlePublishLinkedIn}
+                      disabled={isPublishingLinkedIn}
+                      className="bg-[#0A66C2] hover:bg-[#004182] text-white font-bold h-8 text-xs flex items-center gap-1.5 shadow"
+                    >
+                      {isPublishingLinkedIn ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <span className="font-black text-xs">in</span>
+                      )}
+                      Post to LinkedIn
+                    </Button>
+                  </>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-y-auto">
               {isGenerating ? (
